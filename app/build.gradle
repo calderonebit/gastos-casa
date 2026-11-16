@@ -1,0 +1,40 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.carlos.gastoscasa'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.carlos.gastoscasa'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        fija {
+            storeFile file('gastoscasa.keystore')
+            storePassword 'gastoscasa'
+            keyAlias 'gastoscasa'
+            keyPassword 'gastoscasa'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.fija
+        }
+        debug {
+            signingConfig signingConfigs.fija
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
