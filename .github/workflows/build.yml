@@ -1,0 +1,44 @@
+name: Construir APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preparar icono y firma
+        run: |
+          pip install pillow
+          python3 tools/icono.py
+          base64 -d app/gastoscasa.keystore.b64 > app/gastoscasa.keystore
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compilar
+        run: gradle assembleRelease --no-daemon
+      - name: Renombrar
+        run: cp app/build/outputs/apk/release/app-release.apk GastosDeCasa.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GastosDeCasa
+          path: GastosDeCasa.apk
+      - name: Publicar descarga
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Gastos de Casa 1.0.${{ github.run_number }}
+          files: GastosDeCasa.apk
