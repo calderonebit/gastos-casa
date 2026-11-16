@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Gastos de Casa</title>
+<style>
+  :root{--verde:#1f7a4d;--verde2:#e8f4ee;--gris:#6b7280;--borde:#e5e7eb;--rojo:#c0392b;--fondo:#f6f7f9}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Roboto,sans-serif;background:var(--fondo);color:#111;font-size:16px}
+  header{background:var(--verde);color:#fff;padding:14px 16px;position:sticky;top:0;z-index:5}
+  header h1{margin:0;font-size:20px}
+  header small{opacity:.85}
+  nav{display:flex;background:#fff;border-bottom:1px solid var(--borde);position:sticky;top:58px;z-index:5}
+  nav button{flex:1;padding:12px 4px;border:0;background:none;font-size:15px;color:var(--gris);border-bottom:3px solid transparent}
+  nav button.act{color:var(--verde);border-bottom-color:var(--verde);font-weight:600}
+  main{padding:12px;max-width:600px;margin:auto;padding-bottom:40px}
+  .card{background:#fff;border:1px solid var(--borde);border-radius:12px;padding:14px;margin-bottom:12px}
+  label{display:block;font-size:13px;color:var(--gris);margin:8px 0 4px}
+  input,select,textarea{width:100%;padding:11px;border:1px solid #cfd4da;border-radius:8px;font-size:16px;background:#fff}
+  .fila{display:flex;gap:8px}.fila>*{flex:1}
+  .btn{display:block;width:100%;padding:13px;border:0;border-radius:10px;background:var(--verde);color:#fff;font-size:16px;font-weight:600;margin-top:12px}
+  .btn.sec{background:#fff;color:var(--verde);border:1px solid var(--verde)}
+  .btn.wa{background:#25D366}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:8px 12px;border-radius:20px;border:1px solid #cfd4da;background:#fff;font-size:14px}
+  .chip.act{background:var(--verde);color:#fff;border-color:var(--verde)}
+  .item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--borde);gap:8px}
+  .item:last-child{border-bottom:0}
+  .item .n{font-weight:500}.item .d{font-size:13px;color:var(--gris)}
+  .item .p{font-weight:600;white-space:nowrap}
+  .acc{display:flex;gap:4px}
+  .acc button{border:0;background:none;font-size:18px;padding:4px}
+  .total{display:flex;justify-content:space-between;font-weight:700;font-size:18px;padding-top:10px}
+  .dia h3{margin:0 0 6px;font-size:16px;display:flex;justify-content:space-between}
+  .semnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .semnav button{border:1px solid var(--borde);background:#fff;border-radius:8px;padding:8px 14px;font-size:18px}
+  .resumen{background:var(--verde2);border-color:#bfe3cf}
+  .grande{font-size:26px;font-weight:800;color:var(--verde)}
+  .vacio{color:var(--gris);text-align:center;padding:10px}
+  .tag{font-size:11px;padding:2px 7px;border-radius:10px;background:#eef;color:#335;margin-left:4px}
+  .tag.Limpieza{background:#e6f3ff;color:#145a8c}.tag.Alimentación{background:#fff4e0;color:#8a5a00}.tag.Otros{background:#f0eef8;color:#53408c}
+  .hora{font-size:13px;color:var(--gris)}
+  #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:20px;display:none;z-index:20}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-end;z-index:30}
+  .modal .card{width:100%;border-radius:16px 16px 0 0;margin:0;max-height:90vh;overflow:auto}
+</style>
+</head>
+<body>
+<header><h1>🏠 Gastos de Casa</h1><small>Carlos y Mirna · mitad y mitad</small></header>
+<nav>
+  <button id="t-hoy" class="act" onclick="ver('hoy')">Hoy</button>
+  <button id="t-semana" onclick="ver('semana')">Semana</button>
+  <button id="t-mas" onclick="ver('mas')">Más</button>
+</nav>
+<main>
+  <!-- HOY -->
+  <section id="v-hoy">
+    <div class="card">
+      <div class="hora" id="fechaHoy"></div>
+      <label>Producto</label>
+      <input id="prod" list="sugerencias" placeholder="Ej. arroz, ajo, lejía" autocomplete="off">
+      <datalist id="sugerencias"></datalist>
+      <div class="fila">
+        <div><label>Cantidad</label><input id="cant" type="number" inputmode="decimal" step="any" value="1" min="0"></div>
+        <div><label>Medida</label>
+          <select id="unid">
+            <option>unidad</option><option>kg</option><option>g</option><option>bolsa</option><option>bolsita</option>
+            <option>paquete</option><option>sobre</option><option>litro</option><option>botella</option><option>docena</option>
+            <option>atado</option><option>caja</option><option>lata</option>
+          </select></div>
+      </div>
+      <label>Categoría</label>
+      <div class="chips" id="cats">
+        <button class="chip act" data-c="Alimentación">🍚 Alimentación</button>
+        <button class="chip" data-c="Limpieza">🧴 Limpieza</button>
+        <button class="chip" data-c="Otros">📦 Otros</button>
+      </div>
+      <label>Costo total pagado (S/)</label>
+      <input id="costo" type="number" inputmode="decimal" step="0.10" min="0" placeholder="0.00">
+      <button class="btn" onclick="guardar()">➕ Registrar compra</button>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 4px">Compras de hoy</h3>
+      <div id="listaHoy"></div>
+      <div class="total"><span>Total de hoy</span><span id="totHoy">S/ 0.00</span></div>
+    </div>
+  </section>
+
+  <!-- SEMANA -->
+  <section id="v-semana" style="display:none">
+    <div class="card semnav">
+      <button onclick="mover(-1)">◀</button>
+      <div style="text-align:center"><b id="semTitulo"></b><div class="hora" id="semRango"></div></div>
+      <button onclick="mover(1)">▶</button>
+    </div>
+    <div class="card resumen">
+      <div class="hora">Total de la semana</div>
+      <div class="grande" id="semTotal">S/ 0.00</div>
+      <div id="semCats" class="hora"></div>
+      <div style="margin-top:8px;font-size:17px">A cada uno le toca: <b id="semMitad">S/ 0.00</b></div>
+      <button class="btn wa" onclick="enviarWA()">📲 Enviar resumen por WhatsApp</button>
+    </div>
+    <div id="semDias"></div>
+  </section>
+
+  <!-- MAS -->
+  <section id="v-mas" style="display:none">
+    <div class="card">
+      <h3 style="margin-top:0">Copia de seguridad</h3>
+      <p class="hora">Las compras se guardan solo en este celular. Si cambias de celular o reinstalas la app, guarda antes una copia.</p>
+      <button class="btn sec" onclick="exportar()">📤 Enviar copia de seguridad</button>
+      <label>Restaurar: pega aquí el texto de la copia</label>
+      <textarea id="txtImport" rows="4"></textarea>
+      <button class="btn sec" onclick="importar()">📥 Restaurar copia</button>
+    </div>
+    <div class="card hora">Gastos de Casa v1.0 · Semana de lunes a domingo · La fecha y hora de cada compra se registran solas.</div>
+  </section>
+</main>
+
+<div class="modal" id="modal"><div class="card">
+  <h3 style="margin-top:0">Corregir compra</h3>
+  <div class="hora" id="eFecha"></div>
+  <label>Producto</label><input id="eProd">
+  <div class="fila">
+    <div><label>Cantidad</label><input id="eCant" type="number" inputmode="decimal" step="any"></div>
+    <div><label>Medida</label><select id="eUnid"></select></div>
+  </div>
+  <label>Categoría</label>
+  <select id="eCat"><option>Alimentación</option><option>Limpieza</option><option>Otros</option></select>
+  <label>Costo total (S/)</label><input id="eCosto" type="number" inputmode="decimal" step="0.10">
+  <button class="btn" onclick="guardarEdicion()">Guardar cambios</button>
+  <button class="btn sec" onclick="cerrarModal()">Cancelar</button>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const KEY='gastos_casa_v1';
+const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+let datos=cargar(), cat='Alimentación', semOffset=0, editId=null;
+
+function cargar(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return []}}
+function persistir(){localStorage.setItem(KEY,JSON.stringify(datos))}
+function soles(n){return 'S/ '+(Math.round(n*100)/100).toFixed(2)}
+function dd(n){return String(n).padStart(2,'0')}
+function claveDia(d){return d.getFullYear()+'-'+dd(d.getMonth()+1)+'-'+dd(d.getDate())}
+function fCorta(d){return dd(d.getDate())+'/'+dd(d.getMonth()+1)}
+function lunesDe(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());const w=(x.getDay()+6)%7;x.setDate(x.getDate()-w);return x}
+function toast(t){const e=document.getElementById('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2200)}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function cantTxt(g){const c=+g.cant;return (c===Math.floor(c)?c:c.toString().replace('.',','))+' '+plural(g.unid,c)}
+function plural(u,c){if(c===1||['kg','g'].includes(u))return u;return u==='unidad'?'unidades':(/[aeiou]$/.test(u)?u+'s':u+'es')}
+
+document.querySelectorAll('#cats .chip').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#cats .chip').forEach(x=>x.classList.remove('act'));b.classList.add('act');cat=b.dataset.c});
+document.getElementById('eUnid').innerHTML=document.getElementById('unid').innerHTML;
+
+// Al escribir un producto ya comprado, sugiere su medida y categoría anteriores
+document.getElementById('prod').addEventListener('change',e=>{
+  const v=e.target.value.trim().toLowerCase();const prev=[...datos].reverse().find(g=>g.prod.toLowerCase()===v);
+  if(prev){document.getElementById('unid').value=prev.unid;
+    document.querySelectorAll('#cats .chip').forEach(x=>x.classList.toggle('act',x.dataset.c===prev.cat));cat=prev.cat}
+});
+
+function ver(v){['hoy','semana','mas'].forEach(x=>{document.getElementById('v-'+x).style.display=x===v?'':'none';
+  document.getElementById('t-'+x).classList.toggle('act',x===v)});if(v==='semana')pintarSemana();if(v==='hoy')pintarHoy()}
+
+function guardar(){
+  const prod=document.getElementById('prod').value.trim();
+  const cant=parseFloat(document.getElementById('cant').value);
+  const costo=parseFloat(document.getElementById('costo').value);
+  if(!prod){toast('Escribe el producto');return}
+  if(!(cant>0)){toast('Pon la cantidad');return}
+  if(!(costo>0)){toast('Pon el costo');return}
+  const ahora=new Date();
+  datos.push({id:ahora.getTime()+''+Math.floor(Math.random()*1000),ts:ahora.getTime(),dia:claveDia(ahora),
+    prod:prod.charAt(0).toUpperCase()+prod.slice(1),cant,unid:document.getElementById('unid').value,cat,costo:Math.round(costo*100)/100});
+  persistir();
+  document.getElementById('prod').value='';document.getElementById('cant').value='1';document.getElementById('costo').value='';
+  document.getElementById('unid').value='unidad';
+  toast('✔ Compra registrada');pintarHoy();document.getElementById('prod').focus();
+}
+
+function filaHTML(g,conHora){
+  const h=new Date(g.ts);
+  return `<div class="item"><div><div class="n">${esc(g.prod)}<span class="tag ${g.cat}">${g.cat}</span></div>
+  <div class="d">${esc(cantTxt(g))}${conHora?' · '+dd(h.getHours())+':'+dd(h.getMinutes()):''}</div></div>
+  <div style="display:flex;align-items:center;gap:4px"><span class="p">${soles(g.costo)}</span>
+  <span class="acc"><button onclick="editar('${g.id}')">✏️</button><button onclick="borrar('${g.id}')">🗑️</button></span></div></div>`;
+}
+
+function pintarHoy(){
+  const hoy=new Date();const k=claveDia(hoy);
+  document.getElementById('fechaHoy').textContent=DIAS[hoy.getDay()]+' '+hoy.toLocaleDateString('es-PE',{day:'numeric',month:'long',year:'numeric'})+' · la fecha se pone sola';
+  const l=datos.filter(g=>g.dia===k).sort((a,b)=>b.ts-a.ts);
+  document.getElementById('listaHoy').innerHTML=l.length?l.map(g=>filaHTML(g,true)).join(''):'<div class="vacio">Aún no registras compras hoy</div>';
+  document.getElementById('totHoy').textContent=soles(l.reduce((s,g)=>s+g.costo,0));
+  const nombres=[...new Set(datos.map(g=>g.prod))].sort();
+  document.getElementById('sugerencias').innerHTML=nombres.map(n=>`<option value="${esc(n)}">`).join('');
+}
+
+function datosSemana(){
+  const lun=lunesDe(new Date());lun.setDate(lun.getDate()+semOffset*7);
+  const dias=[];for(let i=0;i<7;i++){const d=new Date(lun);d.setDate(lun.getDate()+i);
+    const k=claveDia(d);dias.push({fecha:d,items:datos.filter(g=>g.dia===k).sort((a,b)=>a.ts-b.ts)})}
+  const todos=dias.flatMap(d=>d.items);const total=todos.reduce((s,g)=>s+g.costo,0);
+  const cats={};todos.forEach(g=>cats[g.cat]=(cats[g.cat]||0)+g.costo);
+  return {lun,dom:dias[6].fecha,dias,total,cats,n:todos.length};
+}
+
+function pintarSemana(){
+  const s=datosSemana();
+  document.getElementById('semTitulo').textContent=semOffset===0?'Esta semana':semOffset===-1?'Semana pasada':(semOffset<0?'Hace '+(-semOffset)+' semanas':'Semana próxima');
+  document.getElementById('semRango').textContent='Lun '+fCorta(s.lun)+' al Dom '+fCorta(s.dom)+'/'+s.dom.getFullYear();
+  document.getElementById('semTotal').textContent=soles(s.total);
+  document.getElementById('semMitad').textContent=soles(s.total/2);
+  document.getElementById('semCats').innerHTML=['Alimentación','Limpieza','Otros'].filter(c=>s.cats[c]).map(c=>c+': '+soles(s.cats[c])).join(' · ')||'Sin compras';
+  document.getElementById('semDias').innerHTML=s.dias.map(d=>{
+    const t=d.items.reduce((a,g)=>a+g.costo,0);
+    return `<div class="card dia"><h3><span>${DIAS[d.fecha.getDay()]} ${fCorta(d.fecha)}</span><span>${soles(t)}</span></h3>
+    ${d.items.length?d.items.map(g=>filaHTML(g,false)).join(''):'<div class="vacio">Sin compras</div>'}</div>`}).join('');
+}
+function mover(n){semOffset+=n;pintarSemana()}
+
+function textoWA(){
+  const s=datosSemana();
+  let t=`🏠 *GASTOS DE CASA*\nSemana del lunes ${fCorta(s.lun)} al domingo ${fCorta(s.dom)}/${s.dom.getFullYear()}\n`;
+  s.dias.forEach(d=>{
+    if(!d.items.length)return;
+    const tot=d.items.reduce((a,g)=>a+g.costo,0);
+    t+=`\n📅 *${DIAS[d.fecha.getDay()]} ${fCorta(d.fecha)}* — ${soles(tot)}\n`;
+    d.items.forEach(g=>t+=`  • ${g.prod} (${cantTxt(g)}) — ${soles(g.costo)}\n`);
+  });
+  t+=`\n━━━━━━━━━━━━━━\n`;
+  ['Alimentación','Limpieza','Otros'].forEach(c=>{if(s.cats[c])t+=`${c}: ${soles(s.cats[c])}\n`});
+  t+=`*TOTAL SEMANA: ${soles(s.total)}*\n\n👤 Carlos: ${soles(s.total/2)}\n👤 Mirna: ${soles(s.total/2)}\n_(gasto dividido entre 2)_`;
+  return t;
+}
+function compartir(txt){
+  if(window.Android&&Android.compartirWhatsApp){Android.compartirWhatsApp(txt)}
+  else{window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')}
+}
+function enviarWA(){const s=datosSemana();if(!s.n){toast('No hay compras en esta semana');return}compartir(textoWA())}
+
+function borrar(id){const g=datos.find(x=>x.id===id);if(!g)return;
+  if(!confirm('¿Borrar "'+g.prod+'" de '+soles(g.costo)+'?'))return;
+  datos=datos.filter(x=>x.id!==id);persistir();refrescar();toast('Compra borrada')}
+function editar(id){const g=datos.find(x=>x.id===id);if(!g)return;editId=id;
+  const h=new Date(g.ts);document.getElementById('eFecha').textContent='Registrada el '+DIAS[h.getDay()]+' '+fCorta(h)+' a las '+dd(h.getHours())+':'+dd(h.getMinutes())+' (la fecha no se cambia)';
+  eProd.value=g.prod;eCant.value=g.cant;eUnid.value=g.unid;eCat.value=g.cat;eCosto.value=g.costo;
+  document.getElementById('modal').style.display='flex'}
+function cerrarModal(){document.getElementById('modal').style.display='none';editId=null}
+function guardarEdicion(){const g=datos.find(x=>x.id===editId);if(!g)return;
+  const c=parseFloat(eCant.value),p=parseFloat(eCosto.value);
+  if(!eProd.value.trim()||!(c>0)||!(p>0)){toast('Revisa los datos');return}
+  g.prod=eProd.value.trim();g.cant=c;g.unid=eUnid.value;g.cat=eCat.value;g.costo=Math.round(p*100)/100;
+  persistir();cerrarModal();refrescar();toast('✔ Corregido')}
+function refrescar(){pintarHoy();if(document.getElementById('v-semana').style.display!=='none')pintarSemana()}
+
+function exportar(){if(!datos.length){toast('No hay datos');return}
+  const txt='GASTOSCASA1:'+btoa(unescape(encodeURIComponent(JSON.stringify(datos))));
+  if(window.Android&&Android.compartirTexto)Android.compartirTexto(txt);else{navigator.clipboard&&navigator.clipboard.writeText(txt);toast('Copiado')}}
+function importar(){const v=document.getElementById('txtImport').value.trim();
+  try{if(!v.startsWith('GASTOSCASA1:'))throw 0;const arr=JSON.parse(decodeURIComponent(escape(atob(v.slice(12)))));
+    if(!Array.isArray(arr))throw 0;const ids=new Set(datos.map(g=>g.id));let n=0;
+    arr.forEach(g=>{if(g&&g.id&&!ids.has(g.id)){datos.push(g);n++}});persistir();refrescar();
+    document.getElementById('txtImport').value='';toast('Se restauraron '+n+' compras')}
+  catch(e){toast('El texto no es una copia válida')}}
+
+pintarHoy();
+</script>
+</body>
+</html>
